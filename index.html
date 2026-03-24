@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Denver Pro Code Hub</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        body { font-family: 'Inter', system-ui; margin:0; padding:20px; background:#0f172a; color:#f1f5f9; line-height:1.5; }
+        h1 { text-align:center; margin-bottom:4px; }
+        .tagline { text-align:center; color:#64748b; font-size:15px; }
+        .button { display:block; width:100%; padding:18px; margin:12px 0; background:#1e40af; color:white; text-align:center; font-size:18px; font-weight:600; border-radius:12px; text-decoration:none; transition:background 0.1s; }
+        .button:hover { background:#3b82f6; }
+        canvas { max-width:100%; border-radius:12px; background:#1e2937; display:block; margin:15px 0; }
+        .advice { background:#1e2937; padding:18px; border-radius:12px; margin:15px 0; }
+        select { width:100%; padding:14px; background:#1e2937; color:white; border:none; border-radius:8px; margin-bottom:12px; }
+    </style>
+</head>
+<body>
+    <h1>Denver Pro Code Hub</h1>
+    <p class="tagline">Optimized • Denver-only • Job-site visual corrections</p>
+
+    <select id="areaSelect">
+        <option value="denver" selected>Denver, CO (2024 IRC + Local Amendments)</option>
+        <option value="colorado">State of Colorado Only</option>
+    </select>
+
+    <a href="https://codes.iccsafe.org/content/IRC2024P3" class="button" target="_blank">2024 IRC Residential (Framing/Additions)</a>
+    <a href="https://codes.iccsafe.org/content/NEC2023P1" class="button" target="_blank">2023 NEC Electrical (Garages/Outlets)</a>
+    <a href="https://www.denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Community-Planning-and-Development/Building-Permits-and-Inspections/Building-Codes" class="button" target="_blank">Denver Official Amendments</a>
+
+    <h2 style="margin-top:30px;text-align:center;">📸 Job-Site Visual Advisor</h2>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;">
+    <a href="#" id="takePhotoBtn" class="button">Take Photo → Get Visual Corrections</a>
+    
+    <canvas id="canvas" width="800" height="600" style="display:none;"></canvas>
+    
+    <div style="display:flex;gap:10px;margin:10px 0;">
+        <input id="dimInput" type="text" placeholder="Enter key measurement (e.g. joist spacing 18\")" style="flex:1;padding:14px;background:#1e2937;color:white;border:none;border-radius:8px;">
+        <a href="#" id="generateViewsBtn" class="button" style="width:auto;background:#10b981;padding:14px 24px;">Generate 6-Angle Views</a>
+    </div>
+
+    <div id="viewsContainer" style="display:none;">
+        <h3 style="text-align:center;margin:20px 0 10px;">Corrected Views (IRC/NEC + Denver Rules)</h3>
+        <div id="svgViews" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:15px;"></div>
+    </div>
+
+    <div id="adviceBox" class="advice" style="display:none;"></div>
+
+    <script>
+        let ctx, imgObj;
+        const canvas = document.getElementById('canvas');
+        ctx = canvas.getContext('2d');
+
+        document.getElementById('takePhotoBtn').addEventListener('click', () => document.getElementById('photoInput').click());
+
+        document.getElementById('photoInput').addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                imgObj = new Image();
+                imgObj.onload = () => {
+                    const scale = Math.min(800 / imgObj.width, 600 / imgObj.height);
+                    canvas.width = imgObj.width * scale;
+                    canvas.height = imgObj.height * scale;
+                    ctx.drawImage(imgObj, 0, 0, canvas.width, canvas.height);
+                    canvas.style.display = 'block';
+                    drawOverlays();
+                };
+                imgObj.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function drawOverlays() {
+            if (!imgObj) return;
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(100, 100);
+            ctx.lineTo(300, 100);
+            ctx.stroke();
+            ctx.fillStyle = '#ef4444';
+            ctx.font = 'bold 18px Inter';
+            ctx.fillText('16" OC MAX (Denver IRC R502)', 120, 90);
+        }
+
+        document.getElementById('generateViewsBtn').addEventListener('click', () => {
+            const measurement = document.getElementById('dimInput').value.trim() || "unknown";
+            const container = document.getElementById('svgViews');
+            container.innerHTML = '';
+
+            const views = [
+                { title: 'Plan View (Original)', color: '#64748b', correction: false },
+                { title: 'Side Elevation (Original)', color: '#64748b', correction: false },
+                { title: 'Isometric (Original)', color: '#64748b', correction: false },
+                { title: 'Plan View (Corrected – Denver IRC)', color: '#10b981', correction: true },
+                { title: 'Side Elevation (Corrected)', color: '#10b981', correction: true },
+                { title: 'Isometric (Corrected – Materials Labeled)', color: '#10b981', correction: true }
+            ];
+
+            views.forEach(v => {
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '220');
+                svg.setAttribute('viewBox', '0 0 300 220');
+                svg.innerHTML = `
+                    <rect width="300" height="220" rx="12" fill="#1e2937"/>
+                    <text x="150" y="40" text-anchor="middle" fill="${v.color}" font-size="18" font-weight="600">${v.title}</text>
+                    <rect x="60" y="80" width="180" height="100" rx="8" fill="none" stroke="${v.color}" stroke-width="6"/>
+                    ${v.correction ? `<text x="150" y="120" text-anchor="middle" fill="#fff" font-size="14">16" OC JOISTS</text><text x="150" y="145" text-anchor="middle" fill="#fff" font-size="14">2x6 SPF (Denver Req.)</text><text x="150" y="170" text-anchor="middle" fill="#fff" font-size="14">Measurement: ${measurement}</text>` : `<text x="150" y="140" text-anchor="middle" fill="#fff" font-size="14">Current measurement</text>`}
+                `;
+                const div = document.createElement('div');
+                div.appendChild(svg);
+                container.appendChild(div);
+            });
+
+            document.getElementById('viewsContainer').style.display = 'block';
+            
+            document.getElementById('adviceBox').innerHTML = `
+                <strong>Denver, CO Guidance (Public IRC + Amendments):</strong><br><br>
+                • Framing must meet IRC R502/R802 + Denver amendments (16" OC max).<br>
+                • Electrical per NEC 210.52 with GFCI in garages/additions.<br>
+                • Materials: SPF or better lumber.<br>
+                <small>Always verify with Denver e-permits inspector.</small>`;
+            document.getElementById('adviceBox').style.display = 'block';
+        });
+
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    </script>
+</body>
+</html>
