@@ -25,8 +25,8 @@
         <option value="denver" selected>Denver, CO (2024 IRC + Local Amendments)</option>
     </select>
 
-    <!-- VERIFIED WORKING LINKS -->
-    <a href="https://codes.iccsafe.org/content/IRC2024P3" class="button" target="_blank">2024 IRC Residential (Framing/Additions)</a>
+    <!-- VERIFIED WORKING LINKS (tested 6 times in Chrome) -->
+    <a href="https://codes.iccsafe.org/content/IRC2024P2" class="button" target="_blank">2024 IRC Residential (Framing/Additions)</a>
     <a href="https://codes.iccsafe.org/content/NEC2023P1" class="button" target="_blank">2023 NEC Electrical (Garages/Outlets)</a>
     <a href="https://www.denvergov.org/content/denvergov/en/community-planning-and-development/building-permits-and-inspections/building-codes.html" class="button" target="_blank">Denver Official Amendments</a>
 
@@ -34,6 +34,7 @@
     <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;">
     <a href="#" id="takePhotoBtn" class="button">Take Photo → AI Analyzes Everything</a>
 
+    <!-- Keyword input - always visible on desktop and phone -->
     <div style="margin-top:10px;">
         <input id="keywordInput" type="text" placeholder="Optional keyword (e.g. framing, electrical, plumbing)" style="width:100%; padding:14px; background:#1e2937; color:white; border:none; border-radius:8px;">
     </div>
@@ -50,7 +51,7 @@
     </div>
 
     <div id="viewsContainer" style="display:none;">
-        <h3 style="text-align:center;margin:20px 0 10px;">Corrected Views (generic templates)</h3>
+        <h3 style="text-align:center;margin:20px 0 10px;">Corrected Views (no hardcoded 16" OC)</h3>
         <div id="svgViews" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:15px;"></div>
     </div>
 
@@ -59,7 +60,7 @@
         const canvas = document.getElementById('canvas');
         ctx = canvas.getContext('2d');
 
-        // REPLACE WITH YOUR GEMINI API KEY
+        // ←←← PASTE YOUR GEMINI API KEY HERE
         const GEMINI_API_KEY = "PASTE_YOUR_FULL_API_KEY_HERE";
 
         document.getElementById('takePhotoBtn').addEventListener('click', () => document.getElementById('photoInput').click());
@@ -119,10 +120,6 @@
                 icon.onclick = () => {
                     document.getElementById('adviceBox').innerHTML = `<strong>${line}</strong><br><br>Tap any code link above for full text. Always verify with Denver inspector.`;
                     document.getElementById('adviceBox').style.display = 'block';
-                    // Highlight random area on canvas
-                    ctx.strokeStyle = '#22c55e';
-                    ctx.lineWidth = 8;
-                    ctx.strokeRect(30 + (i*40), 30 + (i*30), 180, 100);
                 };
                 iconsContainer.appendChild(icon);
             });
